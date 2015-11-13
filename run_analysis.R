@@ -1,8 +1,10 @@
 ## setwd("~/RFolder/Wearables_Tidy_Data/UCI HAR Dataset")
 
+library(dplyr)
+
 ## Read in Wearables data files into separate datafames:
 
-activity_labels <- read.table("./activity_labels.txt", stringsAsFactors = FALSE)
+##activity_labels <- read.table("./activity_labels.txt", stringsAsFactors = FALSE)
 
 ## Read in features.txt and extract just the 2nd column. This vector becomes the  
 ## column names when x_test and x_train are read in.
@@ -32,10 +34,7 @@ x_train <- cbind(Activity = y_train$V1, Subject = subject_train$V1, x_train)
 main_dataset <- merge(x_test, x_train, all = TRUE)
 
 ## Extract all measurements regarding the mean or standard deviation 
-## for each measurement.
+## for each measurement and save as a new reduced_dataset
 
-interesting_cols <- sort(c(1, 2, grep("std", names(main_dataset),
-        ignore.case = TRUE), grep("mean", names(main_dataset),
-        ignore.case = TRUE)))
-reduced_dataset <- main_dataset[, interesting_cols]
+reduced_dataset <- select(main_dataset, 1, 2, matches("mean|std"))
 
