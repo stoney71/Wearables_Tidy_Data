@@ -1,11 +1,11 @@
-## setwd("~/RFolder/Wearables_Tidy_Data/UCI HAR Dataset")
+## Before running this script, ensure working dir contains features.txt and
+## /test and /train subdirs.
 
 library(dplyr)
 
-## Read in Wearables data files into separate datafames:
-
-## Read in features.txt and extract just the 2nd column. This vector becomes the  
-## column names when x_test and x_train are read in.
+## Read in the Wearables data files into separate datafames. In features.txt
+## extract just the 2nd column. This vector becomes the column names when 
+## x_test and x_train are read in.
 
 features <- read.table("./features.txt", stringsAsFactors = FALSE)
 features <- as.character(features[[2]])
@@ -37,13 +37,33 @@ main_dataset <- merge(x_test, x_train, all = TRUE)
 reduced_dataset <- select(main_dataset, 1, 2, matches("mean|std"))
 
 ## read in activity_labels.txt file to obtain activity index then rename
-## obs in Activity column to more meaningful data.
+## variables in Activity column to more meaningful data.
 
 activity_labels <- read.table("./activity_labels.txt", stringsAsFactors = FALSE)
 
-reduced_dataset <- mutate(reduced_dataset, Activity = activity_labels[reduced_dataset$Activity.Num, 2])
+reduced_dataset <- mutate(reduced_dataset, Activity = 
+                activity_labels[reduced_dataset$Activity.Num, 2])
 
-## Remove Activity_num col as its no longer needed. Move Activity column to 
+## Remove Activity.Num col as its no longer needed. Move Activity column to 
 ## the 1st column position.
 
 reduced_dataset <- select(reduced_dataset, Activity, Subject, matches("mean|std"))
+
+## group by Activity & Subject, and summarise based on mean, to produce tidy
+## data. 
+## First create dots to use in group and summarise:
+
+gdots <- lapply(c("Activity", "Subject"), as.symbol)
+cols <- names(reduced_dataset)[-(1:2)]
+wdots <- sapply(cols ,function(x) substitute(mean(x), list(x=as.name(x))))
+
+## Next, create the new tidy data by piping the reduced_dataset through group
+## and summarise functions with above dots.
+
+ave_per_activity_per_subject <- reduced_dataset %>% group_by_(.dots=gdots) %>%
+        summarise_(.dots = wdots)
+
+## Save the tidy data to a file
+
+filename <- "./ave_per_activity_per_subject.txt"
+write.table(ave_per_activity_per_subject, file = filename, row.names = FALSE)
